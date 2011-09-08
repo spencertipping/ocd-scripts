@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Usage:
+# pack-git-repos [--aggressive]
+#
+# This iterates through all Git repositories anywhere inside the current
+# directory (or subdirectories) and runs git gc on each one. It displays
+# current progress and prints the total number of kilobytes removed at
+# the end.
+
+total=0
+
+for file in $(find . -name .git); do
+  if [[ $file/refs/heads -nt $file/last-packed ]]; then
+    pushd ${file%%.git} >& /dev/null
+
+    date > .git/last-packed
+    original=$(du -sk .git | awk '{print $1}')
+    echo -n "$file: $original -> "
+
+    # Use all script arguments to allow the user to specify --aggressive
+    # and/or --auto
+    git gc "$@" >& /dev/null
+    packed=$(du -sk .git | awk '{print $1}')
+    total=$((total + original - packed))
+
+    echo $packed
+    popd >& /dev/null
+  fi
+done
+
+echo Total reduction is ${total}k
