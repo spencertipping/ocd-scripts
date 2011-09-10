@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Usage:
+# uncommitted-git-repos [path]
+#
+# This iterates through all Git repositories anywhere inside the current
+# directory (or subdirectories) and runs git status on each. It then prints
+# the ones with uncommitted changes.
+
+for file in $(find ${1:-.} -name .git); do
+  pushd ${file%%.git} >& /dev/null
+  [[ -z "$(git status --porcelain)" ]] || echo ${file%%.git}
+  popd >& /dev/null
+done
